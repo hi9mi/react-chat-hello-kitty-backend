@@ -1,18 +1,17 @@
 import bcrypt from 'bcrypt';
 import express from 'express';
 import { validationResult } from 'express-validator';
+import socket from 'socket.io';
 import { UserModel } from '../models';
 import { createJWToken } from '../utils/index';
-
-import socket from "socket.io";
 
 class UserController {
 	io: socket.Server;
 
-  constructor(io: socket.Server) {
-    this.io = io;
-  }
-	show(req: express.Request, res: express.Response) {
+	constructor(io: socket.Server) {
+		this.io = io;
+	}
+	show = (req: express.Request, res: express.Response) => {
 		const id: any = req.params.id;
 		UserModel.findById(id, (err: any, user: any) => {
 			if (err) {
@@ -22,38 +21,21 @@ class UserController {
 			}
 			res.json(user);
 		});
-	}
+	};
 
-	getMe(req: any, res: express.Response) {
-		const id: any = req.user._id;
+	getMe = (req: any, res: express.Response) => {
+		const id: string = req.user._id;
 		UserModel.findById(id, (err: any, user: any) => {
-			if (err) {
+			if (err || !user) {
 				return res.status(404).json({
 					message: 'User not found',
 				});
 			}
 			res.json(user);
 		});
-	}
+	};
 
-	create(req: express.Request, res: express.Response) {
-		const postData = {
-			email: req.body.email,
-			username: req.body.username,
-			password: req.body.password,
-		};
-		const user = new UserModel(postData);
-		user
-			.save()
-			.then((obj: any) => {
-				res.send(obj);
-			})
-			.catch((reason) => {
-				res.json(reason);
-			});
-	}
-
-	delete(req: express.Request, res: express.Response) {
+	delete = (req: express.Request, res: express.Response) => {
 		const id: string = req.params.id;
 		UserModel.findOneAndRemove({ _id: id })
 			.then((user) => {
@@ -64,24 +46,87 @@ class UserController {
 				}
 			})
 			.catch(() => {
-				res.status(404).json({
-					message: 'User not found',
+				res.json({
+					message: `User not found`,
 				});
 			});
-	}
+	};
 
-	login(req: express.Request, res: express.Response) {
+	create = (req: express.Request, res: express.Response) => {
+		const postData = {
+			email: req.body.email,
+			username: req.body.username,
+			password: req.body.password,
+		};
+
+		const errors = validationResult(req);
+
+		if (!errors.isEmpty()) {
+			return res.status(422).json({ errors: errors.array() });
+		}
+
+		const user = new UserModel(postData);
+
+		user
+			.save()
+			.then((obj: any) => {
+				res.json(obj);
+			})
+			.catch((reason) => {
+				res.json(reason);
+				res.status(500).json({
+					status: 'error',
+					message: reason,
+				});
+			});
+	};
+
+	verify = (req: express.Request, res: express.Response) => {
+		const hash: any = req.query.hash;
+
+		if (!hash) {
+			return res.status(422).json({ errors: 'Invalid hash' });
+		}
+
+		UserModel.findOne({ confirm_hash: hash }, (err: any, user: any) => {
+			if (err || !user) {
+				return res.status(404).json({
+					status: 'error',
+					message: 'Hash not found',
+				});
+			}
+
+			user.confirmed = true;
+			user.save((err: any) => {
+				if (err) {
+					return res.status(404).json({
+						status: 'error',
+						message: err,
+					});
+				}
+
+				res.json({
+					status: 'success',
+					message: 'Аккаунт успешно подтвержден!',
+				});
+			});
+		});
+	};
+
+	login = (req: express.Request, res: express.Response) => {
 		const postData = {
 			email: req.body.email,
 			password: req.body.password,
 		};
 
 		const errors = validationResult(req);
+
 		if (!errors.isEmpty()) {
 			return res.status(422).json({ errors: errors.array() });
 		}
+
 		UserModel.findOne({ email: postData.email }, (err: any, user: any) => {
-			if (err) {
+			if (err || !user) {
 				return res.status(404).json({
 					message: 'User not found',
 				});
@@ -94,13 +139,13 @@ class UserController {
 					token,
 				});
 			} else {
-				res.json({
+				res.status(403).json({
 					status: 'error',
 					message: 'Incorrect password or email',
 				});
 			}
 		});
-	}
+	};
 }
 
 export default UserController;

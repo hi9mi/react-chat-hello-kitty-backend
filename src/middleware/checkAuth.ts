@@ -2,7 +2,12 @@ import express from 'express';
 import { verifyJWToken } from '../utils/index';
 
 export default function updateLastSeen(req: any, res: express.Response, next: express.NextFunction) {
-	if (req.path === '/user/login' || req.path === '/user/registration') {
+	if (
+		req.path === '/user/login' ||
+		req.path === '/user/registration' ||
+		req.path === '/user/registration/successful' ||
+		req.path === '/user/me'
+	) {
 		return next();
 	}
 

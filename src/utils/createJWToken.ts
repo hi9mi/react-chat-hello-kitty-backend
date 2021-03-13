@@ -19,7 +19,7 @@ export default function createJWToken(user: any) {
 		},
 		config.get('jwtSecret'),
 		{
-			expiresIn: config.get('MAX_AGE'),
+			expiresIn: config.get('maxAge'),
 			algorithm: 'HS256',
 		},
 	);

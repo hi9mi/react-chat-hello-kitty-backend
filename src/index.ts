@@ -3,7 +3,7 @@ import express from 'express';
 import { createServer } from 'http';
 import mongoose from 'mongoose';
 import createRoutes from './core/routes';
-import createSocket from "./core/socket";
+import createSocket from './core/socket';
 
 const app = express();
 const http = createServer(app);
@@ -15,7 +15,7 @@ io.on('connection', function (socket: any) {
 	console.log('a user connected');
 });
 
-const PORT = config.get('port') || 3000;
+const PORT = config.get('port') || 3001;
 
 async function start() {
 	try {
