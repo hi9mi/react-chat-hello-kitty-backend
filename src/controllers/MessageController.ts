@@ -8,12 +8,15 @@ class MessageController {
 	constructor(io: socket.Server) {
 		this.io = io;
 	}
-	index = (req: any, res: express.Response) => {
-		const dialogId: any = req.query.dialog;
-		const userId = req.user._id;
 
+	updateReadedStatus = (res: express.Response, userId: string, dialogId: string) => {
 		try {
 			MessageModel.updateMany({ dialog: dialogId, user: { $ne: userId } }, { $set: { readed: true } });
+
+			this.io.emit('SERVER:MESSAGES_READED', {
+				userId,
+				dialogId,
+			});
 		} catch (err: any) {
 			if (err) {
 				console.log(err);
@@ -23,6 +26,13 @@ class MessageController {
 				});
 			}
 		}
+	};
+
+	index = (req: any, res: express.Response) => {
+		const dialogId: any = req.query.dialog;
+		const userId = req.user._id;
+
+		this.updateReadedStatus(res, userId, dialogId);
 
 		MessageModel.find({ dialog: dialogId })
 			.populate(['dialog', 'user', 'attachments'])
@@ -49,6 +59,8 @@ class MessageController {
 		};
 
 		const message = new MessageModel(postData);
+
+		this.updateReadedStatus(res, userId, req.body.dialog_id);
 
 		message
 			.save()

@@ -8,11 +8,9 @@ export default (http: http.Server) => {
 		socket.on('DIALOGS:JOIN', (dialogId: string) => {
 			socket.dialogId = dialogId;
 			socket.join(dialogId);
-			console.log('JOINED', dialogId);
 		});
 		socket.on('DIALOGS:TYPING', (obj: any) => {
-			console.log(obj);
-			socket.emit('DIALOGS:TYPING', obj);
+			socket.broadcast.emit('DIALOGS:TYPING', obj);
 		});
 	});
 
