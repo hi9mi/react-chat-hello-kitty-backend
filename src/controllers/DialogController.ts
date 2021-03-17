@@ -42,7 +42,7 @@ class DialogController {
 				const message = new MessageModel({
 					text: req.body.text,
 					dialog: dialogObj._id,
-					user: req.body.author,
+					user: req.user._id,
 				});
 
 				message
@@ -61,8 +61,11 @@ class DialogController {
 						res.json(reason);
 					});
 			})
-			.catch((reason: any) => {
-				res.json(reason);
+			.catch((err) => {
+				res.json({
+					status: 'error',
+					message: err,
+				});
 			});
 	};
 

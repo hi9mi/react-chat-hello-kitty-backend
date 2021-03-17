@@ -5,7 +5,15 @@ export default (http: http.Server) => {
 	const io = socket(http);
 
 	io.on('connection', function (socket: any) {
-		//
+		socket.on('DIALOGS:JOIN', (dialogId: string) => {
+			socket.dialogId = dialogId;
+			socket.join(dialogId);
+			console.log('JOINED', dialogId);
+		});
+		socket.on('DIALOGS:TYPING', (obj: any) => {
+			console.log(obj);
+			socket.emit('DIALOGS:TYPING', obj);
+		});
 	});
 
 	return io;
